@@ -56,7 +56,7 @@ ctx.save();ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
 let moon=ctx.createRadialGradient(W*.76,H*.17,2,W*.76,H*.17,Math.min(W,H)*.42);moon.addColorStop(0,'#d4e8f0aa');moon.addColorStop(.09,'#89a9c566');moon.addColorStop(.35,'#45617f22');moon.addColorStop(1,'#17243a00');ctx.fillStyle=moon;ctx.fillRect(0,0,W,H*.72);
 ctx.fillStyle='#d7e8ed';ctx.globalAlpha=.7;ctx.beginPath();ctx.arc(W*.76,H*.17,Math.min(W,H)*.047,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
 function tower(x,y,w,h,col){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x-w*.52,y);ctx.lineTo(x-w*.46,y-h*.72);ctx.lineTo(x-w*.28,y-h*.72);ctx.lineTo(x-w*.2,y-h*.9);ctx.lineTo(x,y-h);ctx.lineTo(x+w*.2,y-h*.9);ctx.lineTo(x+w*.28,y-h*.72);ctx.lineTo(x+w*.46,y-h*.72);ctx.lineTo(x+w*.52,y);ctx.closePath();ctx.fill();ctx.fillRect(x-w*.55,y-5,w*1.1,7);ctx.fillStyle='#9cc3d1';ctx.globalAlpha=.28;ctx.fillRect(x-w*.045,y-h*.57,w*.09,h*.24);ctx.globalAlpha=1}
-for(let i=0;i<17;i++){let x=W*(i/16)+Math.sin(i*8)*9;tower(x,horizon+rand(-5,9),rand(23,55),rand(H*.12,H*.3),i%2?'#0a1220':'#0c1727')}
+for(let i=0;i<17;i++){let x=W*(i/16)+Math.sin(i*8)*9;tower(x,horizon+Math.sin(i*2.7)*5,27+(i*17%29),H*(.13+(i*7%17)/100),i%2?'#0a1220':'#0c1727')}
 // giant ruined arch behind the arena
 ctx.save();ctx.strokeStyle='#24364b';ctx.lineWidth=Math.max(12,W*.025);ctx.beginPath();ctx.moveTo(W*.12,H*.47);ctx.lineTo(W*.12,H*.24);ctx.quadraticCurveTo(W*.5,-H*.04,W*.88,H*.24);ctx.lineTo(W*.88,H*.47);ctx.stroke();ctx.strokeStyle='#71899b';ctx.globalAlpha=.17;ctx.lineWidth=2;ctx.stroke();ctx.restore();
 let haze=ctx.createLinearGradient(0,H*.28,0,H*.66);haze.addColorStop(0,'#9fc6db00');haze.addColorStop(.45,'#9fc6db20');haze.addColorStop(1,'#a4c7dd00');ctx.fillStyle=haze;ctx.fillRect(0,H*.2,W,H*.55);
@@ -82,7 +82,7 @@ for(let c=-5;c<12;c++){ctx.strokeStyle='#8298ad18';ctx.lineWidth=1;ctx.beginPath
 for(let r=2;r<13;r+=2){let f=r/16,y=horizon+Math.pow(f,1.55)*(H-horizon);for(let c=0;c<6;c++){let x=W*c/5+(r%4)*9;ctx.strokeStyle='#c0d1d51a';ctx.beginPath();ctx.moveTo(x,y+1);ctx.lineTo(x+W*.095,y+1);ctx.stroke()}}
 ctx.restore();
 // scattered cracks and stone chips
-for(let i=0;i<22;i++){let x=(i*193+71)%W,y=H*.48+(i*89%(H*.5));ctx.strokeStyle='#02060d88';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rand(-13,13),y+rand(5,18));ctx.lineTo(x+rand(-20,20),y+rand(16,30));ctx.stroke();ctx.fillStyle='#71879a33';ctx.fillRect(x+12,y+8,3,2)}
+for(let i=0;i<22;i++){let x=(i*193+71)%W,y=H*.48+(i*89%(H*.5)),j=Math.sin(i*13.7);ctx.strokeStyle='#02060d88';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+j*13,y+5+(i*7%14));ctx.lineTo(x+Math.cos(i*4.1)*20,y+16+(i*11%15));ctx.stroke();ctx.fillStyle='#71879a33';ctx.fillRect(x+12,y+8,3,2)}
 // luminous floor runes, chipped stones
 for(let i=0;i<8;i++){let x=W*(.18+i*.09),y=H*(.59+(i%3)*.1);ctx.save();ctx.translate(x,y);ctx.rotate(-.2);ctx.strokeStyle='#68dff0';ctx.globalAlpha=.1;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-5,-7);ctx.lineTo(0,-13);ctx.lineTo(6,-6);ctx.lineTo(2,0);ctx.lineTo(6,7);ctx.stroke();ctx.restore()}
 // foreground drifting ash and dust
