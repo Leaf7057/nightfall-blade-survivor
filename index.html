@@ -94,7 +94,7 @@ function buildWraith(elite=false){
 function setup3D(){
  scene3d=new THREE.Scene();scene3d.background=new THREE.Color(0x070b15);scene3d.fog=new THREE.FogExp2(0x111a2b,.026);
  camera3d=new THREE.PerspectiveCamera(43, W/H,.1,180);camera3d.position.set(0,20,25);camera3d.lookAt(0,0,0);
- renderer3d=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer3d.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer3d.setSize(W,H);renderer3d.shadowMap.enabled=true;renderer3d.shadowMap.type=THREE.PCFSoftShadowMap;renderer3d.toneMapping=THREE.ACESFilmicToneMapping;renderer3d.toneMappingExposure=1.15;
+ renderer3d=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer3d.setPixelRatio(Math.min(devicePixelRatio||1,1.35));renderer3d.outputColorSpace=THREE.SRGBColorSpace;renderer3d.setSize(W,H);renderer3d.shadowMap.enabled=true;renderer3d.shadowMap.type=THREE.PCFSoftShadowMap;renderer3d.toneMapping=THREE.ACESFilmicToneMapping;renderer3d.toneMappingExposure=1.15;
  renderer3d.domElement.id='world3d';renderer3d.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block';document.body.insertBefore(renderer3d.domElement,canvas);
  canvas.style.opacity='0';
  scene3d.add(new THREE.HemisphereLight(0x9bbbe0,0x090b14,1.6));
@@ -103,7 +103,7 @@ function setup3D(){
  const stone=mat(0x273343,.22,.82),stone2=mat(0x364252,.18,.78),black=mat(0x101827,.15,.9),windowMat=mat(0x4c9cbd,.2,.35,1.4),fireMat=mat(0xffa54d,.15,.28,2.3);
  mesh(new THREE.PlaneGeometry(120,120),mat(0x101827,.05,.95),scene3d,0,-.12,0).rotation.x=-Math.PI/2;
  // individually bevel-like stone slabs with varied dimensions and tones
- for(let z=-18;z<23;z+=1.35){for(let x=-13;x<14;x+=1.55){let w=1.35+Math.random()*.18,d=1.12+Math.random()*.15;let slab=mesh(new THREE.BoxGeometry(w,.16,d),Math.random()>.5?stone:stone2,scene3d,x+rand(-.12,.12),-.02,z+rand(-.1,.1));slab.rotation.y=rand(-.035,.035);}}
+ for(let z=-18;z<23;z+=1.35){for(let x=-13;x<14;x+=1.55){let w=1.35+Math.random()*.18,d=1.12+Math.random()*.15;let slab=mesh(new THREE.BoxGeometry(w,.16,d),Math.random()>.5?stone:stone2,scene3d,x+rand(-.12,.12),-.02,z+rand(-.1,.1));slab.castShadow=false;slab.rotation.y=rand(-.035,.035);}}
  // cathedral silhouette: nave, buttresses, pointed towers and illuminated lancet windows
  let wall=mat(0x172538,.35,.72),trim=mat(0x52677b,.62,.42),glass=windowMat;
  function tower(x,z,h,r){let base=mesh(new THREE.BoxGeometry(r*1.5,h*.72,r*1.5),wall,scene3d,x,h*.36,z);mesh(new THREE.ConeGeometry(r*1.12,h*.38,4),trim,scene3d,x,h*.91,z).rotation.y=Math.PI/4;mesh(new THREE.BoxGeometry(r*1.8,.18,r*1.8),trim,scene3d,x,h*.7,z);for(let k=-1;k<=1;k++){mesh(new THREE.BoxGeometry(.13,h*.2,.1),glass,scene3d,x+k*r*.35,h*.46,z+r*.76)}}
@@ -124,7 +124,7 @@ function resize3D(){if(!renderer3d)return;renderer3d.setSize(W,H);camera3d.aspec
 function sync3D(){
  if(!threeReady)return;
  let unit=22/Math.max(1,H),worldX=(x)=>((x-W/2)*unit),worldZ=(y)=>((y-H/2)*unit);
- if(player){hero3d.position.set(worldX(player.x),0,worldZ(player.y));hero3d.rotation.y=Math.atan2(Math.sin(player.angle),Math.cos(player.angle));hero3d.position.y=.04+Math.sin(elapsed*5)*.035}
+ if(player){hero3d.position.set(worldX(player.x),0,worldZ(player.y));hero3d.rotation.y=Math.PI/2-player.angle;hero3d.userData.sword.rotation.z=slash>0?Math.sin(elapsed*34)*.72:0;hero3d.position.y=.04+Math.sin(elapsed*5)*.035}
  let active=new Set(enemies);
  for(const [obj,g] of enemy3d){if(!active.has(obj)){scene3d.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose()});enemy3d.delete(obj)}}
  for(const e of enemies){let g=enemy3d.get(e);if(!g){g=buildWraith(e.elite);scene3d.add(g);enemy3d.set(e,g)}g.position.set(worldX(e.x),.05+Math.sin(elapsed*4+g.userData.float)*.13,worldZ(e.y));g.rotation.y=elapsed*.35+g.userData.float;let scale=(e.elite?1.25:1)*(e.hit>0?1.12:1);g.scale.setScalar(scale)}
