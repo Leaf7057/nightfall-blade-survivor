@@ -93,19 +93,30 @@ function buildWraith(elite=false){
 }
 function setup3D(){
  scene3d=new THREE.Scene();scene3d.background=new THREE.Color(0x070b15);scene3d.fog=new THREE.FogExp2(0x111a2b,.026);
- camera3d=new THREE.PerspectiveCamera(43, W/H,.1,180);camera3d.position.set(0,20,25);camera3d.lookAt(0,0,0);
+ camera3d=new THREE.PerspectiveCamera(39, W/H,.1,180);camera3d.position.set(0,18,22);camera3d.lookAt(0,0,0);
  renderer3d=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer3d.setPixelRatio(Math.min(devicePixelRatio||1,1.35));renderer3d.outputColorSpace=THREE.SRGBColorSpace;renderer3d.setSize(W,H);renderer3d.shadowMap.enabled=true;renderer3d.shadowMap.type=THREE.PCFSoftShadowMap;renderer3d.toneMapping=THREE.ACESFilmicToneMapping;renderer3d.toneMappingExposure=1.15;
  renderer3d.domElement.id='world3d';renderer3d.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block';document.body.insertBefore(renderer3d.domElement,canvas);
  // The old canvas had an opaque CSS background, which hid the WebGL scene even when its drawing surface was transparent.
  canvas.style.opacity='0';canvas.style.background='transparent';canvas.style.zIndex='1';
  document.querySelector('.vignette').style.zIndex='2';document.querySelector('.topbar').style.zIndex='3';document.querySelector('.healthwrap').style.zIndex='3';document.querySelector('.xpwrap').style.zIndex='3';document.querySelectorAll('.overlay').forEach(el=>el.style.zIndex='5');document.querySelector('.corner').style.zIndex='3';
- scene3d.add(new THREE.HemisphereLight(0x9bbbe0,0x090b14,1.6));
+ scene3d.add(new THREE.HemisphereLight(0xb9d5f2,0x10101d,1.85));
+ let ambientRim=new THREE.DirectionalLight(0x9d7bff,1.15);ambientRim.position.set(10,8,-7);scene3d.add(ambientRim);
  let moon=new THREE.DirectionalLight(0x9bc9ff,3.1);moon.position.set(-8,16,8);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-18;moon.shadow.camera.right=18;moon.shadow.camera.top=20;moon.shadow.camera.bottom=-20;scene3d.add(moon);
  let fill=new THREE.PointLight(0x557fff,35,28);fill.position.set(0,5,-3);scene3d.add(fill);
  const stone=mat(0x273343,.22,.82),stone2=mat(0x364252,.18,.78),black=mat(0x101827,.15,.9),windowMat=mat(0x4c9cbd,.2,.35,1.4),fireMat=mat(0xffa54d,.15,.28,2.3);
  mesh(new THREE.PlaneGeometry(120,120),mat(0x101827,.05,.95),scene3d,0,-.12,0).rotation.x=-Math.PI/2;
- // individually bevel-like stone slabs with varied dimensions and tones
- for(let z=-18;z<23;z+=1.35){for(let x=-13;x<14;x+=1.55){let w=1.35+Math.random()*.18,d=1.12+Math.random()*.15;let slab=mesh(new THREE.BoxGeometry(w,.16,d),Math.random()>.5?stone:stone2,scene3d,x+rand(-.12,.12),-.02,z+rand(-.1,.1));slab.castShadow=false;slab.rotation.y=rand(-.035,.035);}}
+ // Broken, staggered flagstones: varied sizes and offsets avoid the obvious square grid.
+ const floorMats=[stone,stone2,mat(0x202d3c,.28,.9),mat(0x405064,.2,.86)];
+ for(let row=0;row<34;row++){
+  let z=-22+row*1.42;
+  for(let col=0;col<22;col++){
+   let x=-16+col*1.48+(row%2)*.72+rand(-.18,.18);
+   if(Math.random()<.055)continue;
+   let w=rand(1.05,1.52),d=rand(.92,1.34);
+   let slab=mesh(new THREE.BoxGeometry(w,rand(.11,.2),d),floorMats[Math.floor(Math.random()*floorMats.length)],scene3d,x,-.035+rand(-.025,.025),z+rand(-.13,.13));
+   slab.castShadow=false;slab.rotation.y=rand(-.09,.09);
+  }
+ }
  // cathedral silhouette: nave, buttresses, pointed towers and illuminated lancet windows
  let wall=mat(0x172538,.35,.72),trim=mat(0x52677b,.62,.42),glass=windowMat;
  function tower(x,z,h,r){let base=mesh(new THREE.BoxGeometry(r*1.5,h*.72,r*1.5),wall,scene3d,x,h*.36,z);mesh(new THREE.ConeGeometry(r*1.12,h*.38,4),trim,scene3d,x,h*.91,z).rotation.y=Math.PI/4;mesh(new THREE.BoxGeometry(r*1.8,.18,r*1.8),trim,scene3d,x,h*.7,z);for(let k=-1;k<=1;k++){mesh(new THREE.BoxGeometry(.13,h*.2,.1),glass,scene3d,x+k*r*.35,h*.46,z+r*.76)}}
@@ -120,19 +131,38 @@ function setup3D(){
  // scattered ruins and distant obelisks
  for(let i=0;i<14;i++){let x=rand(-15,15),z=rand(-19,-7);let p=mesh(new THREE.BoxGeometry(rand(.4,1.1),rand(1,3),.7),wall,scene3d,x,1,z);p.rotation.z=rand(-.2,.2)}
  hero3d=buildKnight();scene3d.add(hero3d);
+ // Fine drifting lights give the courtyard depth without obscuring the play area.
+ const moteGeo=new THREE.BufferGeometry(),motePositions=new Float32Array(95*3);
+ for(let i=0;i<95;i++){motePositions[i*3]=rand(-17,17);motePositions[i*3+1]=rand(.35,5.5);motePositions[i*3+2]=rand(-22,18)}
+ moteGeo.setAttribute('position',new THREE.BufferAttribute(motePositions,3));
+ const moteMat=new THREE.PointsMaterial({color:0x9bdcff,size:.075,transparent:true,opacity:.48,depthWrite:false});
+ const motes=new THREE.Points(moteGeo,moteMat);scene3d.add(motes);scene3d.userData.motes=motes;
  threeReady=true;resize3D();
 }
 function resize3D(){if(!renderer3d)return;renderer3d.setSize(W,H);camera3d.aspect=W/H;camera3d.updateProjectionMatrix()}
 function sync3D(){
  if(!threeReady)return;
  let unit=22/Math.max(1,H),worldX=(x)=>((x-W/2)*unit),worldZ=(y)=>((y-H/2)*unit);
- if(player){hero3d.position.set(worldX(player.x),0,worldZ(player.y));hero3d.rotation.y=Math.PI/2-player.angle;hero3d.userData.sword.rotation.z=slash>0?Math.sin(elapsed*34)*.72:0;hero3d.position.y=.04+Math.sin(elapsed*5)*.035}
+ if(player){
+  const px=worldX(player.x),pz=worldZ(player.y);
+  const moving=hero3d.userData.lastX!==undefined&&Math.hypot(px-hero3d.userData.lastX,pz-hero3d.userData.lastZ)>.002;
+  hero3d.userData.lastX=px;hero3d.userData.lastZ=pz;
+  hero3d.position.set(px,.035+Math.sin(elapsed*(moving?10:2.6))*(moving?.065:.025),pz);
+  hero3d.rotation.y=Math.PI/2-player.angle;
+  hero3d.rotation.z=moving?Math.sin(elapsed*8)*.025:Math.sin(elapsed*1.7)*.008;
+  // Soft camera follow keeps the character framed as the player moves around the arena.
+  const desiredX=px,desiredZ=pz+22;
+  camera3d.position.x+=(desiredX-camera3d.position.x)*.035;
+  camera3d.position.z+=(desiredZ-camera3d.position.z)*.035;
+  camera3d.lookAt(px,0,pz-1.5);
+ }
  let active=new Set(enemies);
  for(const [obj,g] of enemy3d){if(!active.has(obj)){scene3d.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose()});enemy3d.delete(obj)}}
  for(const e of enemies){let g=enemy3d.get(e);if(!g){g=buildWraith(e.elite);scene3d.add(g);enemy3d.set(e,g)}g.position.set(worldX(e.x),.05+Math.sin(elapsed*4+g.userData.float)*.13,worldZ(e.y));g.rotation.y=elapsed*.35+g.userData.float;let scale=(e.elite?1.25:1)*(e.hit>0?1.12:1);g.scale.setScalar(scale)}
  let activeOrbs=new Set(orbs);
  for(const [obj,g] of orb3d){if(!activeOrbs.has(obj)){scene3d.remove(g);orb3d.delete(obj)}}
  for(const o of orbs){let g=orb3d.get(o);if(!g){g=new THREE.Mesh(new THREE.OctahedronGeometry(.19,1),mat(0x82f5ff,.1,.2,3));scene3d.add(g);orb3d.set(o,g)}g.position.set(worldX(o.x),.6+Math.sin(elapsed*5)*.12,worldZ(o.y));g.rotation.y=elapsed*2;g.rotation.x=elapsed}
+ if(scene3d.userData.motes){const a=scene3d.userData.motes.geometry.attributes.position;for(let i=0;i<a.count;i++){let y=a.getY(i)+.0025;if(y>6)y=.3;a.setY(i,y)}a.needsUpdate=true}
  renderer3d.render(scene3d,camera3d);
 }
 function draw(){if(threeReady)sync3D()}
