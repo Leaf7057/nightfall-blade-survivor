@@ -28,7 +28,7 @@ button{font:700 11px Inter;letter-spacing:.2em;text-transform:uppercase;color:#0
 <div class="overlay" id="title"><div class="panel"><div class="eyebrow">A dark fantasy survival experience</div><h1 class="logo">NIGHTFALL<br><em>BLADE SURVIVOR</em></h1><p class="subtitle">The old kingdom has fallen. The dead have risen. Hold the line, gather the lost light, and let your blade remember its purpose.</p><button id="start">Enter the ruins</button><div class="divider"></div><div class="hint">MOVE · WASD / ARROW KEYS / TOUCH DRAG<br>YOUR BLADE HUNTS THE NEAREST FOE</div></div></div>
 <div class="overlay hidden" id="levelup"><div class="panel"><div class="eyebrow">The night yields its power</div><h2>CHOOSE YOUR BOON</h2><p class="subtitle">A fragment of the old magic answers your call.</p><div class="cards" id="choices"></div></div></div>
 <div class="overlay hidden" id="over"><div class="panel"><div class="eyebrow">The ruins fall silent</div><h2>YOUR OATH ENDURES</h2><p class="subtitle" id="summary"></p><button id="again">Rise once more</button></div></div>
-<div class="corner">NIGHTFALL · BUILD 1.0</div>
+<div class="corner">NIGHTFALL · BUILD 1.1</div>
 <script>
 (()=>{
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
@@ -167,6 +167,38 @@ function setup3D(){
  for(let x=-6;x<=6;x+=2){let win=mesh(new THREE.BoxGeometry(.55,3,.12),glass,scene3d,x,4.7,-13.25);win.rotation.z=0;mesh(new THREE.ConeGeometry(.4,.75,3),glass,scene3d,x,6.55,-13.25).rotation.z=Math.PI}
  // side columns, broken arches and braziers
  for(let side of [-1,1]){for(let z=-10;z<=8;z+=5){let x=side*9;mesh(new THREE.BoxGeometry(.8,7,.8),wall,scene3d,x,3.5,z);mesh(new THREE.BoxGeometry(1.25,.35,1.25),trim,scene3d,x,7,z);mesh(new THREE.BoxGeometry(1.2,.3,1.2),trim,scene3d,x,.25,z);let flame=mesh(new THREE.IcosahedronGeometry(.23,1),fireMat,scene3d,x,3.7,z+.55);flame.userData.flicker=Math.random()*5;let light=new THREE.PointLight(0xffa34d,12,9);light.position.set(x,4,z+.7);scene3d.add(light)}}
+ // Weathered gothic arcades: curved ribs, buttresses and broken masonry.
+ const archMat=mat(0x35465a,.58,.46),runeMat=mat(0x68cce8,.25,.3,1.05);
+ for(const side of [-1,1]){
+  for(let z=-8;z<=7;z+=5){
+   const x=side*8.95;
+   const curve=new THREE.QuadraticBezierCurve3(new THREE.Vector3(x-side*1.5,6.9,z),new THREE.Vector3(x,9.8,z),new THREE.Vector3(x+side*1.5,6.9,z));
+   const rib=mesh(new THREE.TubeGeometry(curve,18,.13,8,false),archMat,scene3d,0,0,0);
+   rib.castShadow=true;
+   for(let j=0;j<3;j++){
+    let block=mesh(new THREE.BoxGeometry(.36,.22,.38),trim,scene3d,x+side*(.16+j*.18),6.95+j*.04,z);
+    block.rotation.z=side*.08;
+   }
+  }
+ }
+ // Scattered cracked slabs, shallow rain pools and small rubble catch the moonlight.
+ const poolMat=new THREE.MeshStandardMaterial({color:0x162c42,metalness:.42,roughness:.16,transparent:true,opacity:.72});
+ for(let i=0;i<22;i++){
+  const x=rand(-14,14),z=rand(-10,16),r=rand(.25,.85);
+  const pool=mesh(new THREE.CircleGeometry(r,18),poolMat,scene3d,x,-.005,z);
+  pool.rotation.x=-Math.PI/2;pool.rotation.z=rand(0,Math.PI);
+ }
+ for(let i=0;i<48;i++){
+  const x=rand(-15,15),z=rand(-12,17),s=rand(.12,.42);
+  const rubble=mesh(new THREE.DodecahedronGeometry(s,0),floorMats[Math.floor(Math.random()*floorMats.length)],scene3d,x,.12,z);
+  rubble.rotation.set(rand(0,2),rand(0,2),rand(0,2));rubble.castShadow=false;
+ }
+ // Small, restrained rune marks set into the stone around the central courtyard.
+ for(let i=0;i<12;i++){
+  const a=i*Math.PI/6,r=rand(5.7,7.1),x=Math.cos(a)*r,z=Math.sin(a)*r;
+  const rune=mesh(new THREE.TorusGeometry(.16,.018,6,18),runeMat,scene3d,x,.075,z);
+  rune.rotation.x=Math.PI/2;rune.rotation.z=a;
+ }
  // scattered ruins and distant obelisks
  for(let i=0;i<14;i++){let x=rand(-15,15),z=rand(-19,-7);let p=mesh(new THREE.BoxGeometry(rand(.4,1.1),rand(1,3),.7),wall,scene3d,x,1,z);p.rotation.z=rand(-.2,.2)}
  hero3d=buildKnight();scene3d.add(hero3d);
@@ -190,8 +222,17 @@ function sync3D(){
   hero3d.rotation.y=Math.PI/2-player.angle;
   hero3d.rotation.z=moving?Math.sin(elapsed*8)*.018:Math.sin(elapsed*1.7)*.006;
   const gait=moving?Math.sin(elapsed*10):Math.sin(elapsed*2.2)*.035;
-  hero3d.userData.legs?.forEach((leg,i)=>{leg.rotation.x=gait*(i===0?1:-1)*.42});
-  hero3d.userData.arms?.forEach((arm,i)=>{arm.rotation.x=-gait*(i===0?1:-1)*.22});
+  hero3d.userData.legs?.forEach((leg,i)=>{
+   const phase=elapsed*10+(i===0?0:Math.PI);
+   leg.rotation.x=moving?Math.sin(phase)*.48:Math.sin(elapsed*1.8+i)*.018;
+   leg.position.y=.55+(moving?Math.max(0,Math.sin(phase))*.075:0);
+  });
+  hero3d.userData.arms?.forEach((arm,i)=>{
+   arm.rotation.x=moving?-Math.sin(elapsed*10+(i===0?0:Math.PI))*.2:Math.sin(elapsed*1.6+i)*.018;
+   arm.rotation.z=(i===0?1:-1)*(.025+Math.sin(elapsed*1.4+i)*.018);
+  });
+  hero3d.rotation.x=moving?-.035:Math.sin(elapsed*1.5)*.009;
+  hero3d.rotation.z=moving?Math.sin(elapsed*10)*.012:Math.sin(elapsed*1.7)*.006;
   if(hero3d.userData.cape){hero3d.userData.cape.rotation.x=-.08+Math.sin(elapsed*3.2)*(moving?.1:.025);hero3d.userData.cape.rotation.z=Math.sin(elapsed*2.4)*.035;}
   // Soft camera follow keeps the character framed as the player moves around the arena.
   const desiredX=px,desiredZ=pz+22;
