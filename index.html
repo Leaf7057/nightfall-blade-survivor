@@ -28,7 +28,7 @@ button{font:700 11px Inter;letter-spacing:.2em;text-transform:uppercase;color:#0
 <div class="overlay" id="title"><div class="panel"><div class="eyebrow">A dark fantasy survival experience</div><h1 class="logo">NIGHTFALL<br><em>BLADE SURVIVOR</em></h1><p class="subtitle">The old kingdom has fallen. The dead have risen. Hold the line, gather the lost light, and let your blade remember its purpose.</p><button id="start">Enter the ruins</button><div class="divider"></div><div class="hint">MOVE · WASD / ARROW KEYS / TOUCH DRAG<br>YOUR BLADE HUNTS THE NEAREST FOE</div></div></div>
 <div class="overlay hidden" id="levelup"><div class="panel"><div class="eyebrow">The night yields its power</div><h2>CHOOSE YOUR BOON</h2><p class="subtitle">A fragment of the old magic answers your call.</p><div class="cards" id="choices"></div></div></div>
 <div class="overlay hidden" id="over"><div class="panel"><div class="eyebrow">The ruins fall silent</div><h2>YOUR OATH ENDURES</h2><p class="subtitle" id="summary"></p><button id="again">Rise once more</button></div></div>
-<div class="corner">NIGHTFALL · BUILD 0.8</div>
+<div class="corner">NIGHTFALL · BUILD 1.0</div>
 <script>
 (()=>{
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
@@ -54,41 +54,80 @@ let THREE=null,scene3d,camera3d,renderer3d,hero3d,enemy3d=new Map(),orb3d=new Ma
 function mat(col,metal=0,rough=.65,emissive=0){return new THREE.MeshStandardMaterial({color:col,metalness:metal,roughness:rough,emissive:col,emissiveIntensity:emissive})}
 function mesh(geo,material,parent,x=0,y=0,z=0){let m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
 function buildKnight(){
- let g=new THREE.Group(),steel=mat(0x8da9ba,.78,.3),dark=mat(0x18283a,.55,.5),edge=mat(0xc8e4e9,.8,.24),gold=mat(0xb89a62,.72,.32),glow=mat(0x79eaff,.3,.22,2.2),cloth=mat(0x101a2b,.1,.9);
- mesh(new THREE.ConeGeometry(.62,1.65,5),cloth,g,0,1.05,-.28).rotation.x=-.12;
- mesh(new THREE.BoxGeometry(.9,1.08,.55),dark,g,0,1.52,0);
- let chest=mesh(new THREE.SphereGeometry(.57,16,12),steel,g,0,1.62,.12);chest.scale.set(.88,1.03,.55);
- mesh(new THREE.BoxGeometry(.09,.9,.08),gold,g,0,1.55,.43);
- mesh(new THREE.SphereGeometry(.17,12,10),glow,g,0,1.6,.49);
- for(let side of [-1,1]){
-  let sh=mesh(new THREE.SphereGeometry(.34,12,10),steel,g,side*.62,1.88,0);sh.scale.set(1,.85,.9);
-  mesh(new THREE.CylinderGeometry(.16,.2,.72,10),dark,g,side*.68,1.35,0).rotation.z=side*.12;
-  mesh(new THREE.SphereGeometry(.2,10,8),edge,g,side*.69,.94,.02);
-  mesh(new THREE.CylinderGeometry(.17,.22,.78,8),steel,g,side*.25,.48,0);
-  mesh(new THREE.BoxGeometry(.48,.2,.65),dark,g,side*.25,.08,.08);
+ const g=new THREE.Group();
+ const steel=mat(0x71899d,.88,.27),bright=mat(0xc5d8df,.82,.2),dark=mat(0x111b2b,.52,.42),gold=mat(0x987849,.78,.3),cloth=mat(0x321c2c,.08,.94),leather=mat(0x382b2b,.12,.82),glow=mat(0x76eaff,.25,.2,1.8);
+ const part=(geo,m,p,x,y,z)=>mesh(geo,m,p,x,y,z);
+ // Layered, weathered cloak with a shaped silhouette and raised folds.
+ const cape=new THREE.Group();g.add(cape);cape.position.set(0,1.9,-.34);
+ const capeShape=new THREE.Shape();capeShape.moveTo(-.32,.2);capeShape.quadraticCurveTo(-.85,-.2,-.68,-1.45);capeShape.quadraticCurveTo(0,-1.72,.68,-1.45);capeShape.quadraticCurveTo(.85,-.2,.32,.2);capeShape.closePath();
+ const capeMesh=part(new THREE.ShapeGeometry(capeShape,12),cloth,cape,0,0,0);capeMesh.material.side=THREE.DoubleSide;capeMesh.rotation.x=0;
+ for(let i=-2;i<=2;i++){let fold=part(new THREE.BoxGeometry(.035,1.15,.025),mat(0x765064,.05,.9),cape,i*.19,-.72,.018);fold.rotation.z=i*.045}
+ g.userData.cape=cape;
+ // torso: under-suit, breastplate, layered faulds and engraved trim
+ part(new THREE.BoxGeometry(.9,1.12,.55),dark,g,0,1.52,0);
+ let breast=part(new THREE.SphereGeometry(.58,24,18),steel,g,0,1.62,.12);breast.scale.set(.91,1.03,.62);
+ let breastInset=part(new THREE.SphereGeometry(.49,20,16),dark,g,0,1.66,.19);breastInset.scale.set(.9,1,.58);
+ let chestPlate=part(new THREE.SphereGeometry(.43,24,16),bright,g,0,1.73,.25);chestPlate.scale.set(.9,.92,.43);
+ part(new THREE.BoxGeometry(.075,.88,.055),gold,g,0,1.55,.49);
+ part(new THREE.OctahedronGeometry(.13,1),glow,g,0,1.68,.54);
+ for(let i=0;i<3;i++){let plate=part(new THREE.BoxGeometry(.72-i*.08,.16,.48),steel,g,0,1.04-i*.16,.02);plate.rotation.x=-.09}
+ // pauldrons, vambraces and articulated arms
+ const arms=[];
+ for(const side of [-1,1]){
+  let arm=new THREE.Group();g.add(arm);arm.position.set(side*.62,1.89,0);
+  let pauldron=part(new THREE.SphereGeometry(.36,20,14),bright,arm,0,0,0);pauldron.scale.set(1.12,.78,1);
+  part(new THREE.SphereGeometry(.28,16,12),steel,arm,side*.04,-.22,.02).scale.set(.85,1.1,.85);
+  let upper=part(new THREE.CylinderGeometry(.17,.2,.46,12),dark,arm,0,-.47,0);
+  let fore=part(new THREE.CylinderGeometry(.16,.21,.48,12),steel,arm,0,-.85,.02);
+  fore.rotation.z=side*-.08;
+  part(new THREE.BoxGeometry(.35,.1,.28),bright,arm,0,-1.1,.04);
+  arms.push(arm);
  }
- let helm=mesh(new THREE.SphereGeometry(.39,16,12),steel,g,0,2.38,.02);helm.scale.set(.86,1.1,.9);
- mesh(new THREE.ConeGeometry(.13,.36,6),gold,g,0,2.78,0);
- mesh(new THREE.BoxGeometry(.48,.13,.08),dark,g,0,2.38,.35);
- mesh(new THREE.BoxGeometry(.32,.045,.045),glow,g,0,2.39,.405);
- // sword in the right hand, with a broad polished blade
- let sword=new THREE.Group();g.add(sword);sword.position.set(.78,1.12,.12);sword.rotation.z=-.12;
- mesh(new THREE.CylinderGeometry(.055,.065,.34,8),gold,sword,0,-.05,0);
- mesh(new THREE.BoxGeometry(.48,.09,.13),gold,sword,0,.14,0);
- let blade=mesh(new THREE.BoxGeometry(.16,1.12,.055),edge,sword,0,.76,0);blade.rotation.z=0;
- mesh(new THREE.ConeGeometry(.115,.28,4),glow,sword,0,1.44,0).rotation.z=Math.PI;
- g.userData.sword=sword;return g;
+ g.userData.arms=arms;
+ // belt, clasp and hanging leather panels
+ part(new THREE.CylinderGeometry(.49,.49,.13,24),leather,g,0,.88,0);
+ part(new THREE.BoxGeometry(.2,.18,.09),gold,g,0,.87,.49);
+ for(let side of [-1,1]){let t=part(new THREE.BoxGeometry(.24,.58,.12),cloth,g,side*.3,.55,.29);t.rotation.z=side*.12}
+ // legs with layered greaves, knee guards and heavy boots
+ const legs=[];
+ for(const side of [-1,1]){
+  let leg=new THREE.Group();g.add(leg);leg.position.set(side*.25,.55,0);
+  part(new THREE.CylinderGeometry(.19,.22,.48,12),dark,leg,0,-.18,0);
+  part(new THREE.SphereGeometry(.22,16,12),bright,leg,0,-.43,.04).scale.set(1,.72,.72);
+  part(new THREE.CylinderGeometry(.17,.22,.52,12),steel,leg,0,-.72,0);
+  part(new THREE.BoxGeometry(.42,.2,.62),dark,leg,0,-1.02,.13);
+  part(new THREE.BoxGeometry(.36,.12,.08),gold,leg,0,-.55,.19);
+  legs.push(leg);
+ }
+ g.userData.legs=legs;
+ // enclosed helm, layered cheek plates, brow and narrow luminous visor
+ let helm=part(new THREE.SphereGeometry(.4,24,18),bright,g,0,2.42,.02);helm.scale.set(.88,1.08,.92);
+ part(new THREE.ConeGeometry(.14,.42,6),gold,g,0,2.82,-.01);
+ part(new THREE.BoxGeometry(.55,.16,.12),steel,g,0,2.19,.23);
+ for(const side of [-1,1]){let cheek=part(new THREE.BoxGeometry(.16,.36,.2),steel,g,side*.29,2.31,.25);cheek.rotation.z=side*.16}
+ part(new THREE.BoxGeometry(.38,.12,.08),dark,g,0,2.43,.36);
+ part(new THREE.BoxGeometry(.29,.035,.035),glow,g,0,2.43,.405);
+ // small rivets and engraved shoulder inlays
+ for(const side of [-1,1])for(let i=0;i<3;i++)part(new THREE.SphereGeometry(.035,8,6),gold,g,side*(.56+i*.055),1.98-i*.1,.29);
+ return g;
 }
 function buildWraith(elite=false){
- let g=new THREE.Group(),purple=mat(elite?0x54223f:0x342044,.22,.48),skin=mat(0x8060a0,.15,.48),eye=mat(0xff65d5,.1,.2,3),horn=mat(0x171321,.35,.35),dark=mat(0x171321,.1,.8);
- let body=mesh(new THREE.SphereGeometry(.52,14,12),purple,g,0,.68,0);body.scale.set(.78,1.12,.62);
- mesh(new THREE.ConeGeometry(.48,.95,7),dark,g,0,.28,0).rotation.x=Math.PI;
- for(let side of [-1,1]){
-  mesh(new THREE.ConeGeometry(.16,.55,6),horn,g,side*.28,1.37,0).rotation.z=-side*.38;
-  let e=mesh(new THREE.SphereGeometry(.095,10,8),eye,g,side*.2,.83,.47);e.scale.set(1,1.2,.5);
-  mesh(new THREE.ConeGeometry(.12,.4,5),purple,g,side*.48,.43,.05).rotation.z=-side*.8;
+ const g=new THREE.Group();
+ const shell=mat(elite?0x34223f:0x28263b,.34,.5),edge=mat(0x75618a,.48,.38),shadow=mat(0x0b101d,.12,.92),violet=mat(0xa34ce0,.22,.24,2.1),eye=mat(0xff75dc,.12,.18,3);
+ let torso=mesh(new THREE.SphereGeometry(.54,22,18),shell,g,0,.78,0);torso.scale.set(.82,1.2,.66);
+ mesh(new THREE.ConeGeometry(.58,1.15,9),shadow,g,0,.28,0).rotation.x=Math.PI;
+ let mask=mesh(new THREE.SphereGeometry(.36,20,16),edge,g,0,1.36,.12);mask.scale.set(.9,1.08,.72);
+ mesh(new THREE.BoxGeometry(.48,.1,.12),shadow,g,0,1.28,.39);
+ for(const side of [-1,1]){
+  let horn=mesh(new THREE.ConeGeometry(.14,.72,8),shadow,g,side*.25,1.77,-.02);horn.rotation.z=-side*.42;
+  let e=mesh(new THREE.SphereGeometry(.075,12,10),eye,g,side*.16,1.38,.42);e.scale.set(1,1,.55);
+  let shoulder=mesh(new THREE.SphereGeometry(.29,16,12),edge,g,side*.5,.98,0);shoulder.scale.set(1,.65,.85);
+  let arm=mesh(new THREE.CylinderGeometry(.11,.18,.72,10),shell,g,side*.58,.45,.02);arm.rotation.z=side*.2;
+  mesh(new THREE.ConeGeometry(.13,.36,7),shadow,g,side*.65,.03,.03).rotation.z=Math.PI;
  }
- if(elite){let ring=mesh(new THREE.TorusGeometry(.78,.045,8,32),eye,g,0,.7,0);ring.rotation.x=Math.PI/2}
+ // ragged spectral mantle
+ for(let i=0;i<5;i++){let t=mesh(new THREE.ConeGeometry(.13,.9+Math.random()*.4,5),shadow,g,(i-2)*.18,.05,-.24);t.rotation.z=(i-2)*.16}
+ if(elite){let ring=mesh(new THREE.TorusGeometry(.78,.055,10,40),violet,g,0,.8,0);ring.rotation.x=Math.PI/2}
  g.userData.float=Math.random()*6.28;return g;
 }
 function setup3D(){
@@ -149,7 +188,11 @@ function sync3D(){
   hero3d.userData.lastX=px;hero3d.userData.lastZ=pz;
   hero3d.position.set(px,.035+Math.sin(elapsed*(moving?10:2.6))*(moving?.065:.025),pz);
   hero3d.rotation.y=Math.PI/2-player.angle;
-  hero3d.rotation.z=moving?Math.sin(elapsed*8)*.025:Math.sin(elapsed*1.7)*.008;
+  hero3d.rotation.z=moving?Math.sin(elapsed*8)*.018:Math.sin(elapsed*1.7)*.006;
+  const gait=moving?Math.sin(elapsed*10):Math.sin(elapsed*2.2)*.035;
+  hero3d.userData.legs?.forEach((leg,i)=>{leg.rotation.x=gait*(i===0?1:-1)*.42});
+  hero3d.userData.arms?.forEach((arm,i)=>{arm.rotation.x=-gait*(i===0?1:-1)*.22});
+  if(hero3d.userData.cape){hero3d.userData.cape.rotation.x=-.08+Math.sin(elapsed*3.2)*(moving?.1:.025);hero3d.userData.cape.rotation.z=Math.sin(elapsed*2.4)*.035;}
   // Soft camera follow keeps the character framed as the player moves around the arena.
   const desiredX=px,desiredZ=pz+22;
   camera3d.position.x+=(desiredX-camera3d.position.x)*.035;
