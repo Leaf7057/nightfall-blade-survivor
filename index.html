@@ -28,7 +28,7 @@ button{font:700 11px Inter;letter-spacing:.2em;text-transform:uppercase;color:#0
 <div class="overlay" id="title"><div class="panel"><div class="eyebrow">A dark fantasy survival experience</div><h1 class="logo">NIGHTFALL<br><em>BLADE SURVIVOR</em></h1><p class="subtitle">The old kingdom has fallen. The dead have risen. Hold the line, gather the lost light, and let your blade remember its purpose.</p><button id="start">Enter the ruins</button><div class="divider"></div><div class="hint">MOVE · WASD / ARROW KEYS / TOUCH DRAG<br>YOUR BLADE HUNTS THE NEAREST FOE</div></div></div>
 <div class="overlay hidden" id="levelup"><div class="panel"><div class="eyebrow">The night yields its power</div><h2>CHOOSE YOUR BOON</h2><p class="subtitle">A fragment of the old magic answers your call.</p><div class="cards" id="choices"></div></div></div>
 <div class="overlay hidden" id="over"><div class="panel"><div class="eyebrow">The ruins fall silent</div><h2>YOUR OATH ENDURES</h2><p class="subtitle" id="summary"></p><button id="again">Rise once more</button></div></div>
-<div class="corner">NIGHTFALL · BUILD 0.7</div>
+<div class="corner">NIGHTFALL · BUILD 0.8</div>
 <script>
 (()=>{
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
@@ -96,7 +96,9 @@ function setup3D(){
  camera3d=new THREE.PerspectiveCamera(43, W/H,.1,180);camera3d.position.set(0,20,25);camera3d.lookAt(0,0,0);
  renderer3d=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer3d.setPixelRatio(Math.min(devicePixelRatio||1,1.35));renderer3d.outputColorSpace=THREE.SRGBColorSpace;renderer3d.setSize(W,H);renderer3d.shadowMap.enabled=true;renderer3d.shadowMap.type=THREE.PCFSoftShadowMap;renderer3d.toneMapping=THREE.ACESFilmicToneMapping;renderer3d.toneMappingExposure=1.15;
  renderer3d.domElement.id='world3d';renderer3d.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block';document.body.insertBefore(renderer3d.domElement,canvas);
- canvas.style.opacity='0';
+ // The old canvas had an opaque CSS background, which hid the WebGL scene even when its drawing surface was transparent.
+ canvas.style.opacity='0';canvas.style.background='transparent';canvas.style.zIndex='1';
+ document.querySelector('.vignette').style.zIndex='2';document.querySelector('.topbar').style.zIndex='3';document.querySelector('.healthwrap').style.zIndex='3';document.querySelector('.xpwrap').style.zIndex='3';document.querySelectorAll('.overlay').forEach(el=>el.style.zIndex='5');document.querySelector('.corner').style.zIndex='3';
  scene3d.add(new THREE.HemisphereLight(0x9bbbe0,0x090b14,1.6));
  let moon=new THREE.DirectionalLight(0x9bc9ff,3.1);moon.position.set(-8,16,8);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-18;moon.shadow.camera.right=18;moon.shadow.camera.top=20;moon.shadow.camera.bottom=-20;scene3d.add(moon);
  let fill=new THREE.PointLight(0x557fff,35,28);fill.position.set(0,5,-3);scene3d.add(fill);
