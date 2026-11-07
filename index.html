@@ -131,17 +131,19 @@ function buildWraith(elite=false){
  g.userData.float=Math.random()*6.28;return g;
 }
 function setup3D(){
- scene3d=new THREE.Scene();scene3d.background=new THREE.Color(0x070b15);scene3d.fog=new THREE.FogExp2(0x111a2b,.026);
+ scene3d=new THREE.Scene();scene3d.background=new THREE.Color(0x070b15);scene3d.fog=new THREE.FogExp2(0x111a2b,.017);
  camera3d=new THREE.PerspectiveCamera(39, W/H,.1,180);camera3d.position.set(0,18,22);camera3d.lookAt(0,0,0);
- renderer3d=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer3d.setPixelRatio(Math.min(devicePixelRatio||1,1.35));renderer3d.outputColorSpace=THREE.SRGBColorSpace;renderer3d.setSize(W,H);renderer3d.shadowMap.enabled=true;renderer3d.shadowMap.type=THREE.PCFSoftShadowMap;renderer3d.toneMapping=THREE.ACESFilmicToneMapping;renderer3d.toneMappingExposure=1.15;
+ renderer3d=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer3d.setPixelRatio(Math.min(devicePixelRatio||1,1.35));renderer3d.outputColorSpace=THREE.SRGBColorSpace;renderer3d.setSize(W,H);renderer3d.shadowMap.enabled=true;renderer3d.shadowMap.type=THREE.PCFSoftShadowMap;renderer3d.toneMapping=THREE.ACESFilmicToneMapping;renderer3d.toneMappingExposure=1.65;
  renderer3d.domElement.id='world3d';renderer3d.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block';document.body.insertBefore(renderer3d.domElement,canvas);
  // The old canvas had an opaque CSS background, which hid the WebGL scene even when its drawing surface was transparent.
  canvas.style.opacity='0';canvas.style.background='transparent';canvas.style.zIndex='1';
  document.querySelector('.vignette').style.zIndex='2';document.querySelector('.topbar').style.zIndex='3';document.querySelector('.healthwrap').style.zIndex='3';document.querySelector('.xpwrap').style.zIndex='3';document.querySelectorAll('.overlay').forEach(el=>el.style.zIndex='5');document.querySelector('.corner').style.zIndex='3';
- scene3d.add(new THREE.HemisphereLight(0xb9d5f2,0x10101d,1.85));
- let ambientRim=new THREE.DirectionalLight(0x9d7bff,1.15);ambientRim.position.set(10,8,-7);scene3d.add(ambientRim);
- let moon=new THREE.DirectionalLight(0x9bc9ff,3.1);moon.position.set(-8,16,8);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-18;moon.shadow.camera.right=18;moon.shadow.camera.top=20;moon.shadow.camera.bottom=-20;scene3d.add(moon);
- let fill=new THREE.PointLight(0x557fff,35,28);fill.position.set(0,5,-3);scene3d.add(fill);
+ scene3d.add(new THREE.HemisphereLight(0xc9e5ff,0x18243a,2.8));
+ let ambientRim=new THREE.DirectionalLight(0xa98cff,1.75);ambientRim.position.set(10,8,-7);scene3d.add(ambientRim);
+ let moon=new THREE.DirectionalLight(0xb7dcff,4.4);moon.position.set(-8,16,8);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-18;moon.shadow.camera.right=18;moon.shadow.camera.top=20;moon.shadow.camera.bottom=-20;scene3d.add(moon);
+ let fill=new THREE.PointLight(0x648fff,72,42);fill.position.set(0,5,-3);scene3d.add(fill);
+ // Broad, soft courtyard lights make the floor and character readable on phone screens.
+ for(const [x,z,intensity] of [[-8,-2,24],[8,-2,24],[-7,8,18],[7,8,18],[0,13,14]]){const lamp=new THREE.PointLight(0x8bbdff,intensity,16);lamp.position.set(x,3.2,z);scene3d.add(lamp);}
  // A cold moon and faint shafts of light give the cathedral a stronger distant focal point.
  const moonCoreMat=new THREE.MeshBasicMaterial({color:0xc8e7ff});
  const moonCore=mesh(new THREE.SphereGeometry(2.15,32,24),moonCoreMat,scene3d,0,14,-27);
@@ -151,10 +153,10 @@ function setup3D(){
  const moonGlow=new THREE.PointLight(0x8bbdff,42,38);moonGlow.position.set(0,13,-23);scene3d.add(moonGlow);
  const beamMat=new THREE.MeshBasicMaterial({color:0x8ebbe8,transparent:true,opacity:.035,side:THREE.DoubleSide,depthWrite:false});
  for(let i=0;i<5;i++){let beam=mesh(new THREE.ConeGeometry(1.2+i*.35,17,20,1,true),beamMat,scene3d,-5+i*2.5,8,-19);beam.rotation.z=(i-2)*-.12;beam.rotation.x=.12;}
- const stone=mat(0x273343,.22,.82),stone2=mat(0x364252,.18,.78),black=mat(0x101827,.15,.9),windowMat=mat(0x4c9cbd,.2,.35,1.4),fireMat=mat(0xffa54d,.15,.28,2.3);
+ const stone=mat(0x35475e,.22,.82),stone2=mat(0x465b74,.18,.78),black=mat(0x101827,.15,.9),windowMat=mat(0x65c9ed,.2,.35,2.6),fireMat=mat(0xffa54d,.15,.28,2.3);
  mesh(new THREE.PlaneGeometry(120,120),mat(0x101827,.05,.95),scene3d,0,-.12,0).rotation.x=-Math.PI/2;
  // Broken, staggered flagstones: varied sizes and offsets avoid the obvious square grid.
- const floorMats=[stone,stone2,mat(0x202d3c,.28,.9),mat(0x405064,.2,.86)];
+ const floorMats=[stone,stone2,mat(0x2b3d53,.28,.9),mat(0x526a82,.2,.86)];
  for(let row=0;row<34;row++){
   let z=-22+row*1.42;
   for(let col=0;col<22;col++){
@@ -175,7 +177,7 @@ function setup3D(){
  mesh(new THREE.BoxGeometry(18,.35,1.8),trim,scene3d,0,8,-13.5);
  for(let x=-6;x<=6;x+=2){let win=mesh(new THREE.BoxGeometry(.55,3,.12),glass,scene3d,x,4.7,-13.25);win.rotation.z=0;mesh(new THREE.ConeGeometry(.4,.75,3),glass,scene3d,x,6.55,-13.25).rotation.z=Math.PI}
  // side columns, broken arches and braziers
- for(let side of [-1,1]){for(let z=-10;z<=8;z+=5){let x=side*9;mesh(new THREE.BoxGeometry(.8,7,.8),wall,scene3d,x,3.5,z);mesh(new THREE.BoxGeometry(1.25,.35,1.25),trim,scene3d,x,7,z);mesh(new THREE.BoxGeometry(1.2,.3,1.2),trim,scene3d,x,.25,z);let flame=mesh(new THREE.IcosahedronGeometry(.23,1),fireMat,scene3d,x,3.7,z+.55);flame.userData.flicker=Math.random()*5;let light=new THREE.PointLight(0xffa34d,12,9);light.position.set(x,4,z+.7);scene3d.add(light)}}
+ for(let side of [-1,1]){for(let z=-10;z<=8;z+=5){let x=side*9;mesh(new THREE.BoxGeometry(.8,7,.8),wall,scene3d,x,3.5,z);mesh(new THREE.BoxGeometry(1.25,.35,1.25),trim,scene3d,x,7,z);mesh(new THREE.BoxGeometry(1.2,.3,1.2),trim,scene3d,x,.25,z);let flame=mesh(new THREE.IcosahedronGeometry(.23,1),fireMat,scene3d,x,3.7,z+.55);flame.userData.flicker=Math.random()*5;let light=new THREE.PointLight(0xffb66b,20,12);light.position.set(x,4,z+.7);scene3d.add(light)}}
  // Weathered gothic arcades: curved ribs, buttresses and broken masonry.
  const archMat=mat(0x35465a,.58,.46),runeMat=mat(0x68cce8,.25,.3,1.05);
  for(const side of [-1,1]){
@@ -221,7 +223,7 @@ function setup3D(){
  const rainGeo=new THREE.BufferGeometry(),rainCount=360,rainPositions=new Float32Array(rainCount*3);
  for(let i=0;i<rainCount;i++){rainPositions[i*3]=rand(-20,20);rainPositions[i*3+1]=rand(.5,17);rainPositions[i*3+2]=rand(-24,20);}
  rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
- const rainMat=new THREE.PointsMaterial({color:0x9fc9e8,size:.045,transparent:true,opacity:.36,depthWrite:false});
+ const rainMat=new THREE.PointsMaterial({color:0xc4e5ff,size:.075,transparent:true,opacity:.62,depthWrite:false});
  const rain=new THREE.Points(rainGeo,rainMat);scene3d.add(rain);scene3d.userData.rain=rain;
  threeReady=true;resize3D();
 }
