@@ -28,7 +28,7 @@ button{font:700 11px Inter;letter-spacing:.2em;text-transform:uppercase;color:#0
 <div class="overlay" id="title"><div class="panel"><div class="eyebrow">A dark fantasy survival experience</div><h1 class="logo">NIGHTFALL<br><em>BLADE SURVIVOR</em></h1><p class="subtitle">The old kingdom has fallen. The dead have risen. Hold the line, gather the lost light, and let your blade remember its purpose.</p><button id="start">Enter the ruins</button><div class="divider"></div><div class="hint">MOVE · WASD / ARROW KEYS / TOUCH DRAG<br>YOUR BLADE HUNTS THE NEAREST FOE</div></div></div>
 <div class="overlay hidden" id="levelup"><div class="panel"><div class="eyebrow">The night yields its power</div><h2>CHOOSE YOUR BOON</h2><p class="subtitle">A fragment of the old magic answers your call.</p><div class="cards" id="choices"></div></div></div>
 <div class="overlay hidden" id="over"><div class="panel"><div class="eyebrow">The ruins fall silent</div><h2>YOUR OATH ENDURES</h2><p class="subtitle" id="summary"></p><button id="again">Rise once more</button></div></div>
-<div class="corner">NIGHTFALL · BUILD 1.1</div>
+<div class="corner">NIGHTFALL · BUILD 1.2</div>
 <script>
 (()=>{
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
@@ -142,6 +142,15 @@ function setup3D(){
  let ambientRim=new THREE.DirectionalLight(0x9d7bff,1.15);ambientRim.position.set(10,8,-7);scene3d.add(ambientRim);
  let moon=new THREE.DirectionalLight(0x9bc9ff,3.1);moon.position.set(-8,16,8);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-18;moon.shadow.camera.right=18;moon.shadow.camera.top=20;moon.shadow.camera.bottom=-20;scene3d.add(moon);
  let fill=new THREE.PointLight(0x557fff,35,28);fill.position.set(0,5,-3);scene3d.add(fill);
+ // A cold moon and faint shafts of light give the cathedral a stronger distant focal point.
+ const moonCoreMat=new THREE.MeshBasicMaterial({color:0xc8e7ff});
+ const moonCore=mesh(new THREE.SphereGeometry(2.15,32,24),moonCoreMat,scene3d,0,14,-27);
+ const moonHaloMat=new THREE.MeshBasicMaterial({color:0x8ecbff,transparent:true,opacity:.12,side:THREE.DoubleSide,depthWrite:false});
+ const moonHalo=mesh(new THREE.CircleGeometry(3.15,48),moonHaloMat,scene3d,0,14,-26.8);
+ moonHalo.lookAt(0,4,0);
+ const moonGlow=new THREE.PointLight(0x8bbdff,42,38);moonGlow.position.set(0,13,-23);scene3d.add(moonGlow);
+ const beamMat=new THREE.MeshBasicMaterial({color:0x8ebbe8,transparent:true,opacity:.035,side:THREE.DoubleSide,depthWrite:false});
+ for(let i=0;i<5;i++){let beam=mesh(new THREE.ConeGeometry(1.2+i*.35,17,20,1,true),beamMat,scene3d,-5+i*2.5,8,-19);beam.rotation.z=(i-2)*-.12;beam.rotation.x=.12;}
  const stone=mat(0x273343,.22,.82),stone2=mat(0x364252,.18,.78),black=mat(0x101827,.15,.9),windowMat=mat(0x4c9cbd,.2,.35,1.4),fireMat=mat(0xffa54d,.15,.28,2.3);
  mesh(new THREE.PlaneGeometry(120,120),mat(0x101827,.05,.95),scene3d,0,-.12,0).rotation.x=-Math.PI/2;
  // Broken, staggered flagstones: varied sizes and offsets avoid the obvious square grid.
@@ -208,6 +217,12 @@ function setup3D(){
  moteGeo.setAttribute('position',new THREE.BufferAttribute(motePositions,3));
  const moteMat=new THREE.PointsMaterial({color:0x9bdcff,size:.075,transparent:true,opacity:.48,depthWrite:false});
  const motes=new THREE.Points(moteGeo,moteMat);scene3d.add(motes);scene3d.userData.motes=motes;
+ // Fine rain catches the moonlight; each streak loops through the courtyard.
+ const rainGeo=new THREE.BufferGeometry(),rainCount=360,rainPositions=new Float32Array(rainCount*3);
+ for(let i=0;i<rainCount;i++){rainPositions[i*3]=rand(-20,20);rainPositions[i*3+1]=rand(.5,17);rainPositions[i*3+2]=rand(-24,20);}
+ rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
+ const rainMat=new THREE.PointsMaterial({color:0x9fc9e8,size:.045,transparent:true,opacity:.36,depthWrite:false});
+ const rain=new THREE.Points(rainGeo,rainMat);scene3d.add(rain);scene3d.userData.rain=rain;
  threeReady=true;resize3D();
 }
 function resize3D(){if(!renderer3d)return;renderer3d.setSize(W,H);camera3d.aspect=W/H;camera3d.updateProjectionMatrix()}
@@ -247,6 +262,7 @@ function sync3D(){
  for(const [obj,g] of orb3d){if(!activeOrbs.has(obj)){scene3d.remove(g);orb3d.delete(obj)}}
  for(const o of orbs){let g=orb3d.get(o);if(!g){g=new THREE.Mesh(new THREE.OctahedronGeometry(.19,1),mat(0x82f5ff,.1,.2,3));scene3d.add(g);orb3d.set(o,g)}g.position.set(worldX(o.x),.6+Math.sin(elapsed*5)*.12,worldZ(o.y));g.rotation.y=elapsed*2;g.rotation.x=elapsed}
  if(scene3d.userData.motes){const a=scene3d.userData.motes.geometry.attributes.position;for(let i=0;i<a.count;i++){let y=a.getY(i)+.0025;if(y>6)y=.3;a.setY(i,y)}a.needsUpdate=true}
+ if(scene3d.userData.rain){const a=scene3d.userData.rain.geometry.attributes.position;for(let i=0;i<a.count;i++){let y=a.getY(i)-.11;if(y<.15){y=rand(10,18);a.setX(i,rand(-20,20));a.setZ(i,rand(-24,20));}a.setY(i,y)}a.needsUpdate=true}
  renderer3d.render(scene3d,camera3d);
 }
 function draw(){if(threeReady)sync3D()}
